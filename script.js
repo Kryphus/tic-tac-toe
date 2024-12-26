@@ -23,7 +23,7 @@ const gameController = (() => {
 
     const getCurrentPlayer = () => players[currentPlayerIndex];
 
-    const switchturn = () => {
+    const switchTurn = () => {
         currentPlayerIndex = currentPlayerIndex === 0 ? 1 : 0;
     };
 
@@ -42,17 +42,63 @@ const gameController = (() => {
             }
         }
 
-        return board.includes("") ? null : "tie";
+
+        if (!board.includes("")) {
+            return "tie";
+        }
+        return null;
+
     };
 
-    return { addPlayers, getCurrentPlayer, switchturn, checkWinner }
+    return { addPlayers, getCurrentPlayer, switchTurn, checkWinner }
 
 
 })();
 
-gameboard.updateBoard(0, "X");
-gameboard.updateBoard(1, "X");
-gameboard.updateBoard(2, "X");
+const displayController = (() => {
+    const cells = document.querySelectorAll(".cell");
+    const renderBoard = () => {
+        const board = gameboard.getBoard();
+        cells.forEach((cell, index) => {
+            cell.textContent = board[index];
+        });
+    }
 
-const result = gameController.checkWinner();
-console.log(result);
+    const handleCellClick = (e) => {
+        const cellIndex = e.target.id - 1;
+        const currentPlayer = gameController.getCurrentPlayer();
+
+        if (gameboard.getBoard()[cellIndex] !== "") return;
+
+        gameboard.updateBoard(cellIndex, currentPlayer.marker);
+        renderBoard();
+
+        const winner = gameController.checkWinner();
+        if (winner) {
+            setTimeout(() => {
+                if (winner === "tie") {
+                    alert("It's a tie!");
+                } else {
+                    alert(`${currentPlayer.name} wins!`);
+                }
+                gameboard.resetBoard();
+                renderBoard();
+            }, 100)
+        } else {
+            gameController.switchTurn();
+        }
+    };
+
+    const initialize = () => {
+        cells.forEach((cell) => cell.addEventListener("click", handleCellClick));
+        renderBoard();
+    };
+
+    return { initialize };
+})();
+
+
+const player1 = Player("Player 1", "X");
+const player2 = Player("Player 2", "O");
+gameController.addPlayers(player1, player2);
+displayController.initialize();
